@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="he">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הקדשות</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: black;
+            color: white;
+            font-size: 6em;
+            text-align: center;
+        }
+
+        img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="content">טוען...</div>
+
+    <script>
+        const sheetId = "15ZS_G8QKUccRG51ZvqmHqlSW-Dd-0UbFXv9-0uV340k"; // מזהה הגיליון שלך
+        const sheetName = "DATA"; // שם הגיליון
+        const column = "G"; // עמודה G
+        let dataArray = []; // המערך של הנתונים
+
+        async function fetchSheetData() {
+            const timestamp = new Date().getTime(); // מניעת מטמון
+            const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}&range=${column}:${column}&_=${timestamp}`;
+
+            try {
+                const response = await fetch(url, { cache: "no-store" });
+                const text = await response.text();
+
+                dataArray = text.split("\n").map(line => line.replace(/"/g, '').trim()).filter(line => line); // יצירת מערך
+
+                console.log("נתונים שהתקבלו:", dataArray);
+                updateContent(); // עדכון ראשוני
+            } catch (error) {
+                console.error("שגיאה בטעינת הנתונים:", error);
+                document.getElementById("content").innerText = "שגיאה בטעינת הנתונים.";
+            }
+        }
+
+        function updateContent() {
+            if (dataArray.length === 0) return;
+
+            const minutes = new Date().getMinutes(); // מספר הדקות הנוכחי
+            const index = minutes % dataArray.length; // חישוב אינדקס לפי השארית
+            const selectedData = dataArray[index];
+
+            console.log(`הצגת נתון מספר ${index}:`, selectedData);
+
+            const contentDiv = document.getElementById("content");
+
+            // בדיקה אם הנתון הוא תמונה או טקסט
+            if (selectedData.match(/\.(jpeg|jpg|gif|png)$/) || selectedData.startsWith("http")) {
+                contentDiv.innerHTML = `<img src="${selectedData}" alt="הקדשה">`;
+            } else {
+                contentDiv.innerHTML = selectedData.replace(/<br\s*\/?>/g, "<br>");
+            }
+        }
+
+        // טעינת הנתונים מהגיליון
+        fetchSheetData();
+
+        // רענון הנתונים כל דקה
+        setInterval(fetchSheetData, 60000);
+    </script>
+</body>
+
+</html>
