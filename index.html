@@ -45,21 +45,58 @@
                 dataArray = text.split("\n").map(line => line.replace(/"/g, '').trim()).filter(line => line); // יצירת מערך
 
                 console.log("נתונים שהתקבלו:", dataArray);
-                updateContent(); // עדכון ראשוני
+                if (dataArray.length > 0) {
+                    updateContent(); // תציג מיד נתון ראשון
+                    setInterval(updateContent, 10000); // תחליף כל 10 שניות
+                }
             } catch (error) {
                 console.error("שגיאה בטעינת הנתונים:", error);
                 document.getElementById("content").innerText = "שגיאה בטעינת הנתונים.";
             }
         }
+        async function fetchZmanim() {
+            const city = "Kiryat Ekron";
+            const urlHEB = `https://www.hebcal.com/zmanim?cfg=json&geonameid=249552`;
+
+            try {
+                const response = await fetch(urlHEB, {
+                    method: 'GET',
+                    mode: 'no-cors', // Disables CORS
+                })
+                const data = await response.json();
+
+                if (data && data.items) {
+                    // מאחד את כל הזמנים לאובייקט אחד
+                    const allZmanim = data.items.reduce((acc, item) => {
+                        acc[item.title] = item.time;
+                        return acc;
+                    }, {});
+
+                    // הוספת ערך אחד עם כל הזמנים למערך
+                    dataArray.push({ zmanim: allZmanim });
+
+                    console.log("הזמנים נוספו בהצלחה:", allZmanim);
+                } else {
+                    console.error("לא נמצאו נתונים עבור העיר:", city);
+                }
+            } catch (error) {
+                console.error("שגיאה בטעינת הזמנים:", error);
+            }
+        }
+
+
+        fetchZmanim();
 
         function updateContent() {
             if (dataArray.length === 0) return;
 
-            const minutes = new Date().getMinutes(); // מספר הדקות הנוכחי
-            const index = minutes % dataArray.length; // חישוב אינדקס לפי השארית
-            const selectedData = dataArray[index];
+            // const minutes = new Date().getMinutes(); // מספר הדקות הנוכחי
+            // const index = minutes % dataArray.length; // חישוב אינדקס לפי השארית
+            // const selectedData = dataArray[index];
+            const randomIndex = Math.floor(Math.random() * dataArray.length);
+            const selectedData = dataArray[randomIndex];
 
-            console.log(`הצגת נתון מספר ${index}:`, selectedData);
+            console.log(`הצגת נתון מספר ${randomIndex}:`, selectedData);
 
             const contentDiv = document.getElementById("content");
 
@@ -75,7 +112,7 @@
         fetchSheetData();
 
         // רענון הנתונים כל דקה
-        setInterval(fetchSheetData, 60000);
+        // setInterval(fetchSheetData, 60000);
     </script>
 </body>
 
